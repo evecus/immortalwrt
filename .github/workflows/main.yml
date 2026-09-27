@@ -47,8 +47,23 @@ jobs:
         run: |
           cp config-cr660x.seed .config
           make defconfig
-          grep -E "DEVICE_xiaomi_mi-router-cr660|kmod-mt7915e|luci-app-mtwifi" .config
 
+          echo "===== Target ====="
+          grep -E "CONFIG_TARGET_ramips|CONFIG_TARGET_ramips_mt7621|CONFIG_TARGET.*cr6606" .config || true
+
+          echo "===== Kernel settings ====="
+          grep -E "CONFIG_TESTING_KERNEL|CONFIG_KERNEL_GIT" .config || true
+
+          echo "===== Kernel version ====="
+          make kernel_version
+
+          echo "===== ramips Makefile ====="
+          grep -E "KERNEL_PATCHVER|KERNEL_TESTING_PATCHVER" target/linux/ramips/Makefile
+
+          if ! grep -q 'KERNEL_PATCHVER:=5.10' target/linux/ramips/Makefile; then
+            echo "ERROR: ramips is not configured for Linux 5.10"
+            exit 1
+          fi
       - name: Build firmware
         run: |
           make -j$(nproc) || make -j1 V=s
